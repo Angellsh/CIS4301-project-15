@@ -1,7 +1,7 @@
 
-#Stock Insights
+# Stock Insights
 
-##Table of Contents
+## Table of Contents
 
 -[Frontend Setup](#project-setup)
 -[Backend Setup](#project-setup)
