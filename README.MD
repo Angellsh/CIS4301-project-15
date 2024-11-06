@@ -23,7 +23,7 @@ CONNECT_STRING=your_database_connect_string
 
 # Backend Setup
 ```bash
-cd ../client 
+cd ../server 
 npm install
 ```
 
