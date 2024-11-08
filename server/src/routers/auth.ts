@@ -16,7 +16,7 @@ export const register  = async (req: Request, res: Response): Promise<void> => {
     try{
         console.log(firstname)
         const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = `INSERT INTO usr (firstname, lastname, email, pwd) VALUES (:firstname, :lastname, :email, :password)`;
+        const sql = `INSERT INTO aliashynska.usr (userid, firstname, lastname, email, pwd) VALUES ((SELECT NVL(MAX(USERID), 0) + 1 FROM aliashynska.usr), :firstname, :lastname, :email, :password)`;
         console.log("got a request to register a new user")
         const result = await query(sql,{firstname, lastname, email, password: hashedPassword});
         if(result){

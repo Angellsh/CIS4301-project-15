@@ -1,0 +1,129 @@
+:root {
+    --bg-dark: #1a1a1a;
+    --card-dark: #2d2d2d;
+    --text-dark: #ffffff;
+    --shadow-dark: rgba(0, 0, 0, 0.3);
+    --highlight: #444;
+}
+
+.dashboard {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px; 
+    min-height: 100vh;
+    width: 100vw; 
+    background: var(--bg-dark);
+    color: var(--text-dark);
+    max-width: none; 
+    margin: 0; 
+    box-sizing: border-box;
+    padding-top: 80px; 
+}
+
+.section {
+    background: var(--card-dark);
+    width: 220px;
+    height: 220px;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px var(--shadow-dark);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex: 0 0 800px; 
+    max-width: 800px; 
+}
+
+.section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+}
+
+.user-stock-overview {
+    width: 100%;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.stock-queries {
+    flex: 2;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow: hidden;
+}
+.stock-queries input,
+.stock-queries select {
+    max-width: calc(100% - 32px);
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.query-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    max-width: 100%; 
+    box-sizing: border-box;
+}
+
+.market-trends {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.trends-container,
+.news-container {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background: var(--card-dark);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px var(--shadow-dark);
+    transition: transform 0.2s ease;
+}
+
+button, input, select {
+    background: var(--card-dark);
+    color: var(--text-dark);
+    border: 1px solid var(--highlight);
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background: var(--highlight);
+    transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+    .user-stock-overview,
+    .market-trends {
+        grid-template-columns: 1fr;
+    }
+    .section {
+        width: 160px;
+        height: 160px;
+    }
+}
