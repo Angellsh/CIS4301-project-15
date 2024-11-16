@@ -1,7 +1,7 @@
 import React, {useState} from 'react'
 import {Form, Button, Container, Alert} from 'react-bootstrap'
-
-
+import api from '../../axios'
+import { useNavigate } from 'react-router-dom';
 type RegisterFormData={
     firstname: string, 
     lastname: string,
@@ -10,6 +10,8 @@ type RegisterFormData={
     confirmPassword: string;
 };
 const Register: React.FC = () =>{
+    const navigate = useNavigate()
+
     const [formData, setFormData] = useState<RegisterFormData>(
         {
         firstname: '',
@@ -33,15 +35,28 @@ const Register: React.FC = () =>{
             return;
         }
         try{
-            const response = await fetch('http://localhost:3000/register', {
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({email: formData.email, password: formData.password,
-                                    lastname: formData.lastname, firstname: formData.firstname
-                })
-            });
-            if( !response.ok){
-                throw new Error('Registration failed')
+            const response = await api.post('/register', {
+                firstName: formData.firstname,
+                lastName: formData.firstname,
+                email: formData.email,
+                password: formData.password
+              }
+            );
+            if(response.status ===200){
+                setError('User registered successfully.')
+                setFormData({
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                  });
+                const {accessToken} = response.data;
+                localStorage.setItem('accessToken', accessToken);
+                setTimeout(()=>{ navigate('/login')}, 3000)
+            }else{
+                setError("Registration failed");
+                return;
             }
             setError(null);
             setSuccess("Registration successfull!")
@@ -51,8 +66,8 @@ const Register: React.FC = () =>{
         }
     }
     return (
-        <Container style = {{maxWidth: '500px', marginTop: '50px'}}>
-        <h2>Register</h2>
+        <Container className="d-flex justify-content-center align-items-center" style = {{maxWidth: '500px', marginTop: '50px'}}>
+       <div> <h2 className="text-center mb-4"  style ={{marginBottom: '20px'}}  >Register</h2>
         {error && <Alert variant = "danger">{error}</Alert>}
         {success && <Alert variant ="success">{success}</Alert>}
         <Form onSubmit = {handleSubmit}>
@@ -113,7 +128,7 @@ const Register: React.FC = () =>{
             />
         </Form.Group>
         <Button variant="primary" type="submit">Register</Button>
-        </Form>
+        </Form></div>
         </Container>
     );
     

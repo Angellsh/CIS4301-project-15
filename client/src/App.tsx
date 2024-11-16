@@ -6,7 +6,8 @@ import './App.css'
 import Register from './components/Register'
 import Dashboard from './components/Dashboard'
 import Header from './components/Header'
-
+import Login from './components/Login'
+import ResetPassword from './components/ResetPassword'
 
 function App() {
   return(
@@ -14,8 +15,10 @@ function App() {
       <Header />
       <Routes>
         <Route path = "/" element ={<Dashboard />}/>
+        <Route path ="/dashboard" element ={<Dashboard/>}/>
         <Route path = "/register" element = {<Register />}/>
-        <Route path = "/login" /*element = {<Login />}*/ />
+        <Route path = "/login" element = {<Login />} />
+        <Route path ="/reset-password" element = {<ResetPassword/>}/>
       </Routes>
     </BrowserRouter>
   )

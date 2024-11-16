@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import oracleDB from 'oracledb'
 
 dotenv.config()
+
 export const connectDB = async ()=>{
     try{
         await oracleDB.createPool({
@@ -17,11 +18,14 @@ export const connectDB = async ()=>{
     }
     
 }
-export const query = async(sql: string, params: any) =>{ //first is the sql string, second is the parameters to pass to the query
+
+export const sendQuery = async(sql: string, params: any) =>{ //first is the sql string, second is the parameters to pass to the query
     let connection;
     try{
         connection = await oracleDB.getConnection();
-        const result = await connection.execute(sql, params);
+        const result = await connection.execute(sql, params, {
+            outFormat: oracleDB.OUT_FORMAT_OBJECT
+        });
         await connection.commit();
         return result;
     }
@@ -41,4 +45,4 @@ export const query = async(sql: string, params: any) =>{ //first is the sql stri
     }
 }
 
-export default {connectDB, query};
+export default {connectDB, sendQuery};

@@ -9,7 +9,7 @@ const Dashboard = () => {
       {/* Section 1: User Info and Stock Overview */}
       <section className="section user-stock-overview">
         <div className="user-info">
-          <h2>Welcome, User</h2>
+          <h2>Welcome, {localStorage.getItem('userName')}</h2>
         </div>
         <div className="stock-list">
           {/* Stock cards will go here */}
