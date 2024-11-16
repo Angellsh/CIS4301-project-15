@@ -29,7 +29,7 @@ export const register = async ( req: Request, res: Response):Promise<void> => {
       res.cookie('refreshToken', refreshToken, 
         {httpOnly:true, 
          sameSite: 'strict',
-         maxAge: 60*60*1000
+         maxAge: 60*60*1000*24
        }
      )      
      res.status(200).json({accessToken})
@@ -75,7 +75,7 @@ export const login = async( req: Request, res: Response) :Promise<void> =>{
           sameSite:'lax',
           domain: 'localhost',
           path: '/',
-          maxAge: 10*60*1000
+          maxAge: 10*60*1000*24
        }
     )      
     console.log('logged in..')
@@ -175,7 +175,7 @@ export const setNewPassword = async(req: Request, res: Response)=>{
       res.cookie('refreshToken', refreshToken, 
         {httpOnly:true, 
          sameSite: 'strict',
-         maxAge: 60*60*1000
+         maxAge: 60*60*1000*24
        }
      )      
      res.status(201).json({accessToken})
