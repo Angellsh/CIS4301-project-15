@@ -19,6 +19,8 @@ In the 'server' directory, create a `.env` file to store your Oracle database co
 USER=your_database_username
 PASSWORD=your_database_password
 CONNECT_STRING=your_database_connect_string
+EMAIL_USER =your_email_address
+EMAIL_PASS=your_email_password
 ```
 
 # Backend Setup
