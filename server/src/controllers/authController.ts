@@ -19,7 +19,7 @@ export const register = async ( req: Request, res: Response):Promise<void> => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const query = `
-      INSERT INTO usr (firstname, lastname, email, pwd)
+      INSERT INTO ALIASHYNSKA.usr (firstname, lastname, email, pwd)
       VALUES (:firstName, :lastName, :email, :hashedPassword)`;
   
     try {
