@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard'
 import Header from './components/Header'
 import Login from './components/Login'
 import ResetPassword from './components/ResetPassword'
+import StockInfo from './components/StockInfo'
 
 function App() {
   return(
@@ -19,6 +20,7 @@ function App() {
         <Route path = "/register" element = {<Register />}/>
         <Route path = "/login" element = {<Login />} />
         <Route path ="/reset-password" element = {<ResetPassword/>}/>
+        <Route path="/stock/:stockId" element={<StockInfo />} />
       </Routes>
     </BrowserRouter>
   )

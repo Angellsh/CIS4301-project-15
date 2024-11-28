@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -7,6 +8,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stockData, setStockData] = useState(null);
+  const navigate = useNavigate();
 
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -76,7 +78,7 @@ const Dashboard = () => {
         {loading && <p>Loading...</p>}
         {error && <p className="error">{error}</p>}
         {stockData && (
-          <div className="stock-data">
+          <div className="stock-data" onClick={() => navigate(`/stock/${stockData.STOCKID}`)}>
             <h3>{stockData.STOCKID}</h3>
             <p>Name: {stockData.NAME}</p>
             <p>Category: {stockData.CATEGORY}</p>

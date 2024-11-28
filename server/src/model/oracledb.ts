@@ -7,7 +7,7 @@ dotenv.config()
 export const connectDB = async ()=>{
     try{
         await oracleDB.createPool({
-            user: process.env.USER,
+            user: process.env.ORACLE_USER,
             password : process.env.PASSWORD, 
             connectionString: process.env.CONNECT_STRING
         });
@@ -19,7 +19,7 @@ export const connectDB = async ()=>{
     
 }
 
-export const sendQuery = async(sql: string, params: any) =>{ //first is the sql string, second is the parameters to pass to the query
+export const sendQuery = async(sql: string, params: any) => { //first is the sql string, second is the parameters to pass to the query
     let connection;
     try{
         connection = await oracleDB.getConnection();
