@@ -20,7 +20,7 @@ function App() {
         <Route path = "/register" element = {<Register />}/>
         <Route path = "/login" element = {<Login />} />
         <Route path ="/reset-password" element = {<ResetPassword/>}/>
-        <Route path="/stock/:stockId" element={<StockInfo />} />
+        <Route path="/stock/:stockId/:timeRange" element={<StockInfo />} />
       </Routes>
     </BrowserRouter>
   )

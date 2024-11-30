@@ -23,6 +23,7 @@ interface StockData {
 
 const StockInfo = () => {
   const { stockId } = useParams();
+  const {timeRange} = useParams();
   const navigate = useNavigate();
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,16 +45,22 @@ const StockInfo = () => {
           throw new Error('Stock not found');
         }
 
+        const response2 = await fetch('http://localhost:3000/lookup-stock-performance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ stockId, timeRange }),
+          credentials: 'include'
+        });
+
         const data = await response.json();
         
-        const mockPriceHistory = Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          price: Math.random() * 100 + 50
-        }));
+        const PriceHistory = await response2.json(); 
 
         setStockData({
           ...data,
-          priceHistory: mockPriceHistory
+          priceHistory: PriceHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         });
       } catch (err) {
         console.error('Error:', err);
@@ -88,9 +95,22 @@ const StockInfo = () => {
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={stockData.priceHistory}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
+            <XAxis 
+            dataKey="date" 
+            tickFormatter={(date) => new Date(date).toLocaleDateString()} 
+            interval="preserveStartEnd" 
+            /> 
+            <YAxis domain={[dataMin => dataMin - 0.5, dataMax => dataMax + .5]} />
+            <Tooltip
+              formatter={(value, name, props) => {
+                const { payload } = props; 
+                return [
+                  `Date: ${new Date(payload.date).toLocaleDateString()}`,
+                  `$${value.toFixed(2)}`,
+                  
+                ];
+              }}
+            />
             <Line
               type="monotone"
               dataKey="price"
