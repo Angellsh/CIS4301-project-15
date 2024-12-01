@@ -8,13 +8,20 @@ interface TrendingStock {
   STOCKID: string;
   PERCENT: number;
 }
+interface Stock {
+  STOCKID: string,
+  NAME: string,
+  CATEGORY: string
+}
+
 
 const Dashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('1d');
   const [stockSymbol, setStockSymbol] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [stockData, setStockData] = useState<TrendingStock | null>(null);
+  const [stockData, setStockData] = useState<Stock | null>(null);
+  const [tstockData, setTstockData] = useState<TrendingStock | null>(null);
   const navigate = useNavigate();
   const [trendingStocks, setTrendingStocks] = useState([]);
   const [trendingError, setTrendingError] = useState('');
@@ -30,6 +37,7 @@ const Dashboard = () => {
           headers: {
             'Content-Type': 'application/json',
           },
+
           credentials: 'include'
         });
 
@@ -177,13 +185,18 @@ const Dashboard = () => {
             {trendingError && <p className="error">{trendingError}</p>}
             {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
               <ul>
-                {trendingStocks.map((stock: any) => (
+                {trendingStocks.map((tstock: any) => (
                   <li
-                    key={stock.STOCKID}
+                    key={tstock.STOCKID}
                     className="trending-stock"
-                    onClick={() => navigate(`/stock/${stock.STOCKID}/${selectedTimeRange}`)}
+                    onClick={() => navigate(`/stock/${tstock.STOCKID}/${selectedTimeRange}`)}
                   >
-                    <h4>{stock.STOCKID}</h4>
+                    <h4>
+                      {tstock.STOCKID} <span className="stock-price">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        {tstock.PERCENT.toFixed(2)}%</span>
+                    </h4>
                   </li>
                 ))}
               </ul>

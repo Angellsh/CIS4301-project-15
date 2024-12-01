@@ -168,8 +168,14 @@ button:hover {
     transition: background-color 0.2s ease;
   }
   
+
+  .trending-stocks li .stock-price {
+    font-weight: bold;
+    color: #00ff00; 
+  }
+  
   .trending-stocks li:hover {
-    background-color: #f9f9f9;
+    background-color: #f9f9f97f;
   }
 
 .error {

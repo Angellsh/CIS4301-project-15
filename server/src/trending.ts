@@ -9,12 +9,39 @@ interface TrendingStock {
 
   export const getTrendingStocks = async (req: Request, res: Response): Promise<void> => {
     const query = `
-    SELECT stockid, AVG((high + low + close) / 3) AS average_price
-    FROM ALIASHYNSKA.STOCKPERFORMANCE
-    GROUP BY stockid
-    ORDER BY average_price DESC
-    FETCH FIRST 5 ROWS ONLY
-    `;
+  WITH recent_prices AS (
+      SELECT 
+          stockid, 
+          close AS close_price, 
+          recorddate,
+          ROW_NUMBER() OVER (PARTITION BY stockid ORDER BY recorddate DESC) AS row_num
+      FROM 
+          ALIASHYNSKA.STOCKPERFORMANCE
+  ),
+  price_changes AS (
+      SELECT 
+          p1.stockid, 
+          p1.close_price AS latest_close,
+          p5.close_price AS close_5_days_ago,
+          ((p1.close_price - p5.close_price) / p5.close_price) * 100 AS percentage_change
+      FROM 
+          recent_prices p1
+      JOIN 
+          recent_prices p5
+      ON 
+          p1.stockid = p5.stockid
+      WHERE 
+          p1.row_num = 1 AND p5.row_num = 5
+  )
+  SELECT 
+      stockid, 
+      percentage_change
+  FROM 
+      price_changes
+  ORDER BY 
+      percentage_change DESC
+  FETCH FIRST 5 ROWS ONLY
+`;
   
     try {
       console.log("Executing query:", query);
@@ -30,10 +57,7 @@ interface TrendingStock {
   
       const trendingStocks = result.rows.map((row: any) => ({
         STOCKID: row.STOCKID,
-        LATEST_PRICE: row.LATEST_PRICE,
-        PRICE_5_DAYS_AGO: row.PRICE_5_DAYS_AGO,
-        ABSOLUTE_GAIN: row.ABSOLUTE_GAIN,
-        PERCENTAGE_GAIN: row.PERCENTAGE_GAIN,
+        PERCENT: row.PERCENTAGE_CHANGE,
       }));
   
       console.log("Trending stocks:", trendingStocks);
