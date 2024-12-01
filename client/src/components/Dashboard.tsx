@@ -1,14 +1,56 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
+
+
+interface TrendingStock {
+  STOCKID: string;
+  PERCENT: number;
+}
 
 const Dashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('1d');
   const [stockSymbol, setStockSymbol] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [stockData, setStockData] = useState(null);
+  const [stockData, setStockData] = useState<TrendingStock | null>(null);
   const navigate = useNavigate();
+  const [trendingStocks, setTrendingStocks] = useState([]);
+  const [trendingError, setTrendingError] = useState('');
+  const [trendingLoading, setTrendingLoading] = useState(true);
+
+
+
+  useEffect(() => {
+    const fetchTrendingStocks = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/trending-stocks', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch trending stocks');
+        }
+
+        const data = await response.json();
+        setTrendingStocks(
+          data
+        );
+
+      } catch (err) {
+        setTrendingError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setTrendingLoading(false);
+      }
+    };
+
+    fetchTrendingStocks();
+  }, []);
 
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -130,7 +172,25 @@ const Dashboard = () => {
         <div className="trends-container">
           <h2>Market Trends</h2>
           <div className="trending-stocks">
-            {/* Trending stocks will go here */}
+            <h2>Trending Stocks</h2>
+            {trendingLoading && <p>Loading trending stocks...</p>}
+            {trendingError && <p className="error">{trendingError}</p>}
+            {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
+              <ul>
+                {trendingStocks.map((stock: any) => (
+                  <li
+                    key={stock.STOCKID}
+                    className="trending-stock"
+                    onClick={() => navigate(`/stock/${stock.STOCKID}/${selectedTimeRange}`)}
+                  >
+                    <h4>{stock.STOCKID}</h4>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!trendingLoading && !trendingError && trendingStocks.length === 0 && (
+              <p>No trending stocks available at the moment.</p>
+            )}
           </div>
         </div>
         <div className="news-container">

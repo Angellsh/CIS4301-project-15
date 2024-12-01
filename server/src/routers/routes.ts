@@ -2,6 +2,7 @@ import {Router } from 'express'
 import {register, login, logout, resetPassword, verifyCode, setNewPassword} from '../controllers/authController'
 import { getStockById } from '../stock';
 import { getStockPerf } from '../stockperf';
+import { getTrendingStocks } from "../trending"
 import { refreshToken } from "../controllers/refreshToken";
 
 
@@ -15,4 +16,6 @@ router.post('/verify-code', verifyCode);
 router.post('/new-password', setNewPassword);
 router.post('/lookup-stock',getStockById);
 router.post('/lookup-stock-performance',getStockPerf);
+router.post("/trending-stocks",getTrendingStocks);
+router.get('/trending-stocks', getTrendingStocks);
 export default router;

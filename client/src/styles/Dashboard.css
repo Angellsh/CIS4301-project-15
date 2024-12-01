@@ -153,6 +153,25 @@ button:hover {
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
 }
 
+.trending-stocks ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .trending-stocks li {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .trending-stocks li:hover {
+    background-color: #f9f9f9;
+  }
+
 .error {
     color: red;
     margin-top: 10px;
