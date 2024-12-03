@@ -9,9 +9,10 @@
 .dashboard {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start; /* Changed from center to flex-start */
+    align-items: flex-start; /* Added to align items at the top */
     gap: 30px;
-    padding: 20px; 
+    padding: 20px 40px; /* Added horizontal padding */
     min-height: 100vh;
     width: 100vw; 
     background: var(--bg-dark);
@@ -34,8 +35,9 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    flex: 0 0 800px; 
+    flex: 0 0 auto; /* Changed from 800px to auto */
     max-width: 800px; 
+    margin-bottom: 30px; /* Add bottom margin for spacing */
 }
 
 .section:hover {
@@ -45,6 +47,7 @@
 
 .user-stock-overview {
     width: 100%;
+    margin-bottom: 30px;
 }
 
 .user-info {
@@ -82,9 +85,9 @@
     box-sizing: border-box;
 }
 
+/* Remove the old market-trends styles */
 .market-trends {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 20px;
     width: 100%;
 }
@@ -142,6 +145,7 @@ button:hover {
     min-width: 320px; 
     height: 220px;
     transition: all 0.3s ease; 
+    margin-right: 30px; /* Add right margin for spacing */
 }
 
 .section.stock-queries.has-stock {
@@ -181,4 +185,85 @@ button:hover {
 .error {
     color: red;
     margin-top: 10px;
+}
+
+/* Add new section styles */
+.trending-section,
+.news-section {
+    flex: 0 0 calc(50% - 15px);
+    max-width: calc(50% - 15px);
+    height: 100px;
+}
+
+.trending-stocks h2,
+.news-section h2 {
+    margin-bottom: 20px;
+}
+
+.trending-stocks li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+}
+
+.trending-stocks .stock-price {
+    margin-left: auto;
+}
+
+/* Update section styles */
+.trending-section {
+    flex: 0 0 320px;
+    max-width: 320px;
+    height: 480px; /* Increased from 220px */
+    min-height: 450px; /* Increased to match height */
+    display: flex;
+    flex-direction: column;
+}
+
+.news-section {
+    flex: 0 0 220px;
+    max-width: 220px;
+    height: 180px;
+    overflow: auto;
+}
+
+.trending-stocks {
+    flex: 1;
+    overflow-y: hidden;
+}
+
+.trending-stocks::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.trending-stocks h2 {
+    position: sticky;
+    top: 0;
+    background: var(--card-dark);
+    padding: 10px 0;
+    margin: 0 0 15px 0;
+    z-index: 1;
+}
+
+.trending-stocks {
+    max-height: auto;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .trending-section,
+    .news-section {
+        flex: 0 0 100%;
+        max-width: 100%;
+        height: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .trending-section,
+    .news-section {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
 }

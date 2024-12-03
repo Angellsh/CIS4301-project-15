@@ -175,42 +175,39 @@ const Dashboard = () => {
         )}
       </section>
 
-      {/* Section 3: Market Trends and News */}
-      <section className="section market-trends">
-        <div className="trends-container">
-          <h2>Market Trends</h2>
-          <div className="trending-stocks">
-            <h2>Trending Stocks</h2>
-            {trendingLoading && <p>Loading trending stocks...</p>}
-            {trendingError && <p className="error">{trendingError}</p>}
-            {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
-              <ul>
-                {trendingStocks.map((tstock: any) => (
-                  <li
-                    key={tstock.STOCKID}
-                    className="trending-stock"
-                    onClick={() => navigate(`/stock/${tstock.STOCKID}/${selectedTimeRange}`)}
-                  >
-                    <h4>
-                      {tstock.STOCKID} <span className="stock-price">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        {tstock.PERCENT.toFixed(2)}%</span>
-                    </h4>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {!trendingLoading && !trendingError && trendingStocks.length === 0 && (
-              <p>No trending stocks available at the moment.</p>
-            )}
-          </div>
+      {/* Section 3: Trending Stocks */}
+      <section className="section trending-section">
+        <div className="trending-stocks">
+          <h2>Trending Stocks</h2>
+          {trendingLoading && <p>Loading trending stocks...</p>}
+          {trendingError && <p className="error">{trendingError}</p>}
+          {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
+            <ul>
+              {trendingStocks.map((tstock: any) => (
+                <li
+                  key={tstock.STOCKID}
+                  className="trending-stock"
+                  onClick={() => navigate(`/stock/${tstock.STOCKID}/${selectedTimeRange}`)}
+                >
+                  <h4>
+                    {tstock.STOCKID} 
+                    <span className="stock-price">{tstock.PERCENT.toFixed(2)}%</span>
+                  </h4>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!trendingLoading && !trendingError && trendingStocks.length === 0 && (
+            <p>No trending stocks available at the moment.</p>
+          )}
         </div>
-        <div className="news-container">
-          <h2>Market News</h2>
-          <div className="news-list">
-            {/* News articles will go here */}
-          </div>
+      </section>
+
+      {/* Section 4: Market News */}
+      <section className="section news-section">
+        <h2>Market News</h2>
+        <div className="news-list">
+          {/* News articles will go here */}
         </div>
       </section>
     </div>
