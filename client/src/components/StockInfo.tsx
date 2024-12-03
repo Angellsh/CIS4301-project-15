@@ -22,48 +22,52 @@ interface StockData {
 }
 
 const StockInfo = () => {
-  const { stockId } = useParams();
-  const {timeRange} = useParams();
+  const { stockId, timeRange: initialTimeRange } = useParams();
   const navigate = useNavigate();
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [timeRange, setTimeRange] = useState(initialTimeRange || '1m');
+
+  const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTimeRange = e.target.value;
+    setTimeRange(newTimeRange);
+    navigate(`/stock/${stockId}/${newTimeRange}`, { replace: true });
+  };
 
   useEffect(() => {
     const fetchStockData = async () => {
+      setLoading(true);
       try {
-        const response = await fetch('http://localhost:3000/lookup-stock', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ stockId }),
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Stock not found');
+        const [stockResponse, perfResponse] = await Promise.all([
+          fetch('http://localhost:3000/lookup-stock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stockId }),
+            credentials: 'include'
+          }),
+          fetch('http://localhost:3000/lookup-stock-performance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stockId, timeRange }),
+            credentials: 'include'
+          })
+        ]);
+
+        if (!stockResponse.ok || !perfResponse.ok) {
+          throw new Error('Failed to fetch stock data');
         }
 
-        const response2 = await fetch('http://localhost:3000/lookup-stock-performance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ stockId, timeRange }),
-          credentials: 'include'
-        });
-
-        const data = await response.json();
-        
-        const PriceHistory = await response2.json(); 
+        const stockData = await stockResponse.json();
+        const priceHistory = await perfResponse.json();
 
         setStockData({
-          ...data,
-          priceHistory: PriceHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          ...stockData,
+          priceHistory: priceHistory.sort((a: { date: string }, b: { date: string }) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
         });
       } catch (err) {
-        console.error('Error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
@@ -73,7 +77,7 @@ const StockInfo = () => {
     if (stockId) {
       fetchStockData();
     }
-  }, [stockId]);
+  }, [stockId, timeRange]); // Added timeRange as dependency
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -86,29 +90,43 @@ const StockInfo = () => {
       </button>
       
       <header className="stock-header">
-        <h1>{stockData.NAME} ({stockData.STOCKID})</h1>
-        <p className="category">{stockData.CATEGORY}</p>
+        <div className="stock-header-info">
+          <h1>{stockData?.NAME} ({stockData?.STOCKID})</h1>
+          <p className="category">{stockData?.CATEGORY}</p>
+        </div>
+        <select 
+          value={timeRange} 
+          onChange={handleTimeRangeChange}
+          className="time-range-select"
+        >
+          <option value="1d">1 Day</option>
+          <option value="1w">1 Week</option>
+          <option value="1m">1 Month</option>
+          <option value="1y">1 Year</option>
+        </select>
       </header>
 
       <div className="chart-container">
         <h2>Price History</h2>
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={stockData.priceHistory}>
+            <LineChart data={stockData.priceHistory}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
-            dataKey="date" 
-            tickFormatter={(date) => new Date(date).toLocaleDateString()} 
-            interval="preserveStartEnd" 
+              dataKey="date" 
+              tickFormatter={(date) => new Date(date).toLocaleDateString()} 
+              interval="preserveStartEnd" 
             /> 
-            <YAxis domain={[dataMin => dataMin - 0.5, dataMax => dataMax + .5]} />
+            <YAxis 
+              domain={[(dataMin: number) => dataMin - 0.5, (dataMax: number) => dataMax + 0.5]} 
+              tickFormatter={(value) => `$${value.toFixed(2)}`}
+            />
             <Tooltip
-              formatter={(value, name, props) => {
-                const { payload } = props; 
-                return [
-                  `Date: ${new Date(payload.date).toLocaleDateString()}`,
-                  `$${value.toFixed(2)}`,
-                  
-                ];
+              formatter={(value, _name, props) => {
+              const { payload } = props; 
+              return [
+                `Date: ${new Date(payload.date).toLocaleDateString()}`,
+                `$${typeof value === 'number' ? value.toFixed(2) : value}`,
+              ];
               }}
             />
             <Line
@@ -118,7 +136,7 @@ const StockInfo = () => {
               dot={false}
               strokeWidth={2}
             />
-          </LineChart>
+            </LineChart>
         </ResponsiveContainer>
       </div>
 

@@ -16,7 +16,7 @@ interface Stock {
 
 
 const Dashboard = () => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('1d');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('1m');
   const [stockSymbol, setStockSymbol] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -70,7 +70,7 @@ const Dashboard = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ stockId: stockSymbol }),
+          body: JSON.stringify({ stockId: stockSymbol.toUpperCase() }),
           credentials: 'include',
         });
 
@@ -101,7 +101,7 @@ const Dashboard = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ stockId: stockSymbol, timeRange: selectedTimeRange }),
+          body: JSON.stringify({ stockId: stockSymbol.toUpperCase(), timeRange: selectedTimeRange }),
           credentials: 'include',
         });
   

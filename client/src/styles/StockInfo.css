@@ -28,6 +28,18 @@
     background: var(--card-dark);
     border-radius: 12px;
     box-shadow: 0 4px 6px var(--shadow-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stock-header-info {
+    flex: 1;
+}
+
+.time-range-select {
+    min-width: 120px;
+    margin-left: 20px;
 }
 
 .stock-header h1 {
