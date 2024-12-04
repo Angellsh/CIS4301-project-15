@@ -3,6 +3,8 @@ import {register, login, logout, resetPassword, verifyCode, setNewPassword} from
 import { getStockById } from '../stock';
 import { getStockPerf } from '../stockperf';
 import { getTrendingStocks } from "../trending"
+import { getStockVolatility } from "../stockvol"
+import { getMA } from "../ma"
 import { refreshToken } from "../controllers/refreshToken";
 
 
@@ -18,4 +20,6 @@ router.post('/lookup-stock',getStockById);
 router.post('/lookup-stock-performance',getStockPerf);
 router.post("/trending-stocks",getTrendingStocks);
 router.get('/trending-stocks', getTrendingStocks);
+router.post('/stockvol', getStockVolatility);
+router.post('/ma', getMA);
 export default router;
