@@ -71,6 +71,10 @@ const StockInfo = () => {
     {
       id: 'average',
       text: `Get the average performance of ${stockData?.STOCKID} over the selected period`
+    },
+    {
+      id: 'compare',
+      text: `Compare ${stockData?.STOCKID}'s performance to NASDAQ`
     }
   ];
 
@@ -127,7 +131,7 @@ const StockInfo = () => {
           queryId: optionId,
           stockid: stockData?.STOCKID,
           startDate: customStartDate || (stockData?.priceHistory[0]?.date.split('T')[0] || '2014-01-01'), 
-          endDate: customEndDate || formatDate(new Date()) 
+          endDate: customEndDate || (stockData?.priceHistory[stockData.priceHistory.length- 1]?.date.split('T')[0] || '2014-01-01')
         }),
         credentials: 'include',
         signal: controller.signal
@@ -163,6 +167,16 @@ const StockInfo = () => {
             `During this period, ${stockData?.STOCKID} maintained an average price of $${avgPrice.toFixed(2)} with an average daily price movement of ${avgVolatility.toFixed(2)}%. ${volatilityText}`;
           break;
 
+          case 'compare':
+          message = data.STOCK_RETURN_PERCENT === 0 && data.MARKET_RETURN_PERCENT === 0 ?
+            `No comparison data available for ${stockData?.STOCKID} in the selected period` :
+            `${stockData?.STOCKID} has ${data.RETURN_DIFFERENCE > 5 ? 'significantly outperformed' : 
+              data.RETURN_DIFFERENCE > 0 ? 'slightly outperformed' :
+              data.RETURN_DIFFERENCE < -5 ? 'significantly underperformed' : 'slightly underperformed'} 
+            the market, with a return of ${data.STOCK_RETURN_PERCENT.toFixed(2)}% compared to the market's ${data.MARKET_RETURN_PERCENT.toFixed(2)}% 
+            (${Math.abs(data.RETURN_DIFFERENCE).toFixed(2)}% ${data.RETURN_DIFFERENCE > 0 ? 'better' : 'worse'})`;
+          break;
+
       }
       
       setAnalysisResult(message);
@@ -170,6 +184,7 @@ const StockInfo = () => {
       if (err.name === 'AbortError') {
         setAnalysisResult('');
       } else {
+        console.log("data",err);
         setAnalysisResult('Failed to perform analysis. Please try again.');
       }
     } finally {
