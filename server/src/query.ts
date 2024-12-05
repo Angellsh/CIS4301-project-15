@@ -6,7 +6,7 @@ const queries = [{
     body: `SELECT stockid,
             AVG(volume) AS avg_volume
             FROM ALIASHYNSKA.stockperformance
-            WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND TO_DATE(:end_date, 'YYYY-MM-DD')
+            WHERE recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
             GROUP BY stockid
             ORDER BY avg_volume DESC
             FETCH FIRST :numInt ROWS ONLY`
@@ -17,7 +17,7 @@ const queries = [{
         body:`SELECT stockid, recorddate,
                 AVG(volume) AS avg_volume
                 FROM ALIASHYNSKA.stockperformance
-                WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND TO_DATE(:end_date, 'YYYY-MM-DD')
+                WHERE recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
                 GROUP BY stockid, recorddate
                 ORDER BY avg_volume DESC
                 FETCH FIRST :numInt ROWS ONLY
@@ -30,14 +30,13 @@ const queries = [{
                 MAX(close) as max_price, 
                 ROUND(((MAX(close)- MIN(close))/ MIN(close)*100), 2) as price_change_percent
             FROM ALIASHYNSKA.STOCKPERFORMANCE
-                WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') 
-            AND TO_DATE(:end_date, 'YYYY-MM-DD')
+                WHERE recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
+            AND TO_DATE(:endDate, 'YYYY-MM-DD')
             GROUP BY stockid
             ORDER BY price_change_percent
             FETCH FIRST :NUMINT ROWS ONLY `},
     {
-        id: 9,
-        name: 'movement',
+        id: 'movement',
         body: `
       SELECT 
         MIN(close) as min_price,
@@ -45,13 +44,12 @@ const queries = [{
         ROUND(((MAX(close) - MIN(close)) / MIN(close) * 100), 2) as price_change_percent
       FROM ALIASHYNSKA.STOCKPERFORMANCE
       WHERE stockid = :stockid
-      AND recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') 
-      AND TO_DATE(:end_date, 'YYYY-MM-DD')
+      AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
+      AND TO_DATE(:endDate, 'YYYY-MM-DD')
     `
     },
     {
-        id: 10, 
-        name: 'average daily',
+        id: 'average',
         body: `
       SELECT 
         ROUND(AVG(close), 2) as avg_price,
@@ -119,13 +117,11 @@ export const processQuery = async (req: Request, res: Response) => {
             res.status(404).json({ error: 'Query not found' });
             return;
         }
-
         const dbres = await sendQuery(query.body, {
             stockid,
             startDate,
             endDate
         });
-
         if (dbres?.rows) {
             res.status(200).json({ rows: dbres.rows });
         } else {
@@ -156,11 +152,10 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
         const formatted_end=new Date(endDate).toISOString().split('T')[0]
 
         const dbres = await sendQuery(query.body, {
-            start_date: formatted_start,
-            end_date :formatted_end,
+            startDate: formatted_start,
+            endDate :formatted_end,
             numInt
         });
-        console.log(dbres?.rows)
         if (dbres?.rows) {
             res.status(200).json({ rows: dbres.rows });
         } else {
@@ -172,4 +167,37 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
         console.error(err);
         res.status(500).json({ error: 'Internal server error' });
     }
+}
+
+
+export const getTuplesCount = async (req: Request, res : Response) =>{
+    try{
+        console.log("here")
+        { const query = `SELECT 
+    (SELECT COUNT(*) FROM ALIASHYNSKA.stockperformance) + 
+    (SELECT COUNT(*) FROM ALIASHYNSKA.stock) AS tuplesCount
+FROM dual`
+        const dbres = await sendQuery(query, {});
+        console.log(dbres)
+        if(!dbres?.rows){
+            res.sendStatus(404);
+            return;
+        }
+        if (dbres?.rows?.length === 0) {
+            // Handle the case when there are no rows returned
+            console.log("No data found");
+            res.status(404).json({ error: "No data found" });
+            return;
+        }
+
+            const data = dbres.rows[0]
+            console.log(dbres.rows[0])
+            res.status(200).json(data);
+
+    }
+    }
+    catch(err){
+        res.status(500).json({ error: 'Internal server error' });
+    }
+        
 }

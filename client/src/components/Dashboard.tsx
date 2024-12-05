@@ -17,6 +17,7 @@ interface Stock {
 
 const Dashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('1m');
+  const [rows, setRows] = useState('')
   const [stockSymbol, setStockSymbol] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,12 +34,15 @@ const Dashboard = () => {
   const [queryFlag, setQueryFlag] = useState(false);
 
   const insightOptions = {
+
     '5': 'Stocks with highest average trading volume',
     '6': 'Stocks with highest average daily trading volume',
     '7': 'Most volatile stocks',
     '8': 'Stocks with highest percentage increase', 
-    '9': 'Stocks trading above their moving averages '
   };
+  const indOptions = {
+    '1':'Daily returns for the selected stock',
+  }
 
   const formatValue = (value: any) => {
     if (typeof value === 'number') {
@@ -49,7 +53,32 @@ const Dashboard = () => {
     }
     return value;
   };
+  useEffect(()=>{
+    const fetchCount = async () =>
+      {
+      try{
+        console.log("fetching tuples count")
+        const response = await fetch('http://localhost:3000/get-tuples-count', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!response.ok){
+            throw new Error("Failed to fetch tuples count.")
+        }
+        const data = await response.json();
+        setRows(data.TUPLESCOUNT);  
 
+      }catch(err){
+  
+      }
+
+    }
+    fetchCount();
+   
+  }, [])
   useEffect(() => {
     const fetchTrendingStocks = async () => {
       try {
@@ -80,6 +109,7 @@ const Dashboard = () => {
 
     fetchTrendingStocks();
   }, []);
+
 
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -117,7 +147,8 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('http://localhost:3000/lookup-stock', {
+        console.log("here")
+       const response = await fetch('http://localhost:3000/lookup-stock', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -125,12 +156,15 @@ const Dashboard = () => {
           body: JSON.stringify({ stockId: stockSymbol.toUpperCase(), timeRange: selectedTimeRange }),
           credentials: 'include',
         });
+   
   
         if (!response.ok) {
           throw new Error('Stock performance not found');
         }
   
-        const data = await response.json();
+     const data = await response.json();
+     console.log(data)
+
         setStockData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -192,6 +226,7 @@ const Dashboard = () => {
           </div>
         </section>
       </div>
+      <div className="row-container" style={{font:'bold'}}> Contains {rows} tuples.</div>
 
       {/* Second Row */}
       <div className="row-container">
@@ -210,6 +245,8 @@ const Dashboard = () => {
               <option value="1w">1 Week</option>
               <option value="1m">1 Month</option>
               <option value="1y">1 Year</option>
+
+
             </select>
           </div>
           {loading && <p>Loading...</p>}
