@@ -6,7 +6,7 @@ const queries = [{
     id:5, 
     body: `SELECT stockid,
             AVG(volume) AS avg_volume
-            FROM stockperformance
+            FROM ALIASHYNSKA.stockperformance
             WHERE recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
             GROUP BY stockid
             ORDER BY avg_volume DESC
@@ -16,23 +16,23 @@ const queries = [{
         body:`
 with percChange AS (SELECT 
         (SELECT close 
-         FROM stockperformance 
+         FROM ALIASHYNSKA.stockperformance 
          WHERE stockid = :stockid
          AND recorddate = TO_DATE(:startDate, 'YYYY-MM-DD') 
          FETCH FIRST 1 ROWS ONLY) AS start_price,
         
         (SELECT close 
-         FROM stockperformance 
+         FROM ALIASHYNSKA.stockperformance 
          WHERE stockid = :stockid
          AND recorddate =  TO_DATE(:endDate, 'YYYY-MM-DD') 
          FETCH FIRST 1 ROWS ONLY) AS end_price
-         FROM stockperformance)
+         FROM ALIASHYNSKA.stockperformance)
 ,
 max_min AS (
     SELECT 
         MAX(high) AS max_price, 
         MIN(low) AS min_price
-    FROM stockperformance
+    FROM ALIASHYNSKA.stockperformance
     WHERE stockid = :stockid 
     AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
     AND TO_DATE(:endDate, 'YYYY-MM-DD')
@@ -40,7 +40,7 @@ max_min AS (
 volData AS (
     SELECT 
         STDDEV(close) AS volatility
-    FROM stockperformance
+    FROM ALIASHYNSKA.stockperformance
     WHERE stockid = :stockid
     AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
     AND TO_DATE(:endDate, 'YYYY-MM-DD')
