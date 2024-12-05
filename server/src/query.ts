@@ -56,14 +56,35 @@ JOIN volData ON 1 = 1
     {
         id: 'movement',
         body: `
-      SELECT 
-        MIN(close) as min_price,
-        MAX(close) as max_price,
-        ROUND(((MAX(close) - MIN(close)) / MIN(close) * 100), 2) as price_change_percent
-      FROM ALIASHYNSKA.STOCKPERFORMANCE
-      WHERE stockid = :stockid
-      AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
-      AND TO_DATE(:endDate, 'YYYY-MM-DD')
+      WITH price_data AS (
+        SELECT
+            stockid,
+            recorddate,
+            (open + high + low + close) / 4 AS ohlc_avg -- Calculate OHLC/4 for each record
+        FROM 
+            ALIASHYNSKA.STOCKPERFORMANCE
+        WHERE 
+            stockid = :stockid
+            AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
+            AND TO_DATE(:endDate, 'YYYY-MM-DD')
+        ),
+        ordered_prices AS (
+        SELECT
+            stockid,
+            recorddate,
+            ohlc_avg,
+            FIRST_VALUE(ohlc_avg) OVER (PARTITION BY stockid ORDER BY recorddate ASC) AS earliest_price,
+            LAST_VALUE(ohlc_avg) OVER (PARTITION BY stockid ORDER BY recorddate ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS latest_price
+        FROM 
+            price_data
+        )
+        SELECT 
+        DISTINCT stockid,
+        earliest_price,
+        latest_price,
+        ROUND(((latest_price - earliest_price) / earliest_price * 100), 2) AS price_change_percent
+        FROM 
+        ordered_prices
     `
     },
     {
@@ -141,7 +162,7 @@ export const processQuery = async (req: Request, res: Response) => {
             startDate,
             endDate
         });
-
+        console.log(dbres);
         if (dbres?.rows) {
             res.status(200).json({ rows: dbres.rows });
         } else {
