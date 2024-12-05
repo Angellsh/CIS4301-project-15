@@ -21,6 +21,10 @@ interface StockData {
   }[];
 }
 
+const formatDate = (date: Date) => {
+  return date.toISOString().split('T')[0];
+};
+
 const StockInfo = () => {
   const { stockId, timeRange: initialTimeRange } = useParams();
   const navigate = useNavigate();
@@ -28,16 +32,42 @@ const StockInfo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState(initialTimeRange || '1m');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [isCustomRange, setIsCustomRange] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
 
   const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newTimeRange = e.target.value;
-    setTimeRange(newTimeRange);
-    navigate(`/stock/${stockId}/${newTimeRange}`, { replace: true });
+    if (newTimeRange === 'custom') {
+      setIsCustomRange(true);
+      setTempEndDate(formatDate(new Date())); // Set end date to today
+    } else {
+      setIsCustomRange(false);
+      setTimeRange(newTimeRange);
+      navigate(`/stock/${stockId}/${newTimeRange}`, { replace: true });
+    }
+  };
+
+  const handleDateRangeSubmit = () => {
+    if (tempStartDate && tempEndDate) {
+      if (new Date(tempStartDate) > new Date(tempEndDate)) {
+        setError('Start date cannot be after end date');
+        return;
+      }
+      
+      setCustomStartDate(tempStartDate);
+      setCustomEndDate(tempEndDate);
+      const range = `custom_${tempStartDate}_${tempEndDate}`;
+      setTimeRange(range);
+    }
   };
 
   useEffect(() => {
     const fetchStockData = async () => {
       setLoading(true);
+      setError('');
       try {
         const [stockResponse, perfResponse] = await Promise.all([
           fetch('http://localhost:3000/lookup-stock', {
@@ -49,13 +79,22 @@ const StockInfo = () => {
           fetch('http://localhost:3000/lookup-stock-performance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ stockId, timeRange }),
+            body: JSON.stringify({ 
+              stockId, 
+              timeRange,
+              // Add start and end dates if using custom range
+              ...(timeRange.startsWith('custom_') && {
+                startDate: customStartDate,
+                endDate: customEndDate
+              })
+            }),
             credentials: 'include'
           })
         ]);
 
         if (!stockResponse.ok || !perfResponse.ok) {
-          throw new Error('Failed to fetch stock data');
+          const errorData = await perfResponse.json();
+          throw new Error(errorData.error || 'Failed to fetch stock data');
         }
 
         const stockData = await stockResponse.json();
@@ -77,7 +116,7 @@ const StockInfo = () => {
     if (stockId) {
       fetchStockData();
     }
-  }, [stockId, timeRange]); // Added timeRange as dependency
+  }, [stockId, timeRange, customStartDate, customEndDate]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -94,16 +133,44 @@ const StockInfo = () => {
           <h1>{stockData?.NAME} ({stockData?.STOCKID})</h1>
           <p className="category">{stockData?.CATEGORY}</p>
         </div>
-        <select 
-          value={timeRange} 
-          onChange={handleTimeRangeChange}
-          className="time-range-select"
-        >
-          <option value="1d">1 Day</option>
-          <option value="1w">1 Week</option>
-          <option value="1m">1 Month</option>
-          <option value="1y">1 Year</option>
-        </select>
+        <div className="time-range-controls">
+          <select 
+            value={isCustomRange ? 'custom' : timeRange} 
+            onChange={handleTimeRangeChange}
+            className="time-range-select"
+          >
+            <option value="1d">1 Day</option>
+            <option value="1w">1 Week</option>
+            <option value="1m">1 Month</option>
+            <option value="1y">1 Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          
+          {isCustomRange && (
+            <div className="date-range-picker">
+              <input
+                type="date"
+                value={tempStartDate}
+                onChange={(e) => setTempStartDate(e.target.value)}
+                className="date-input"
+              />
+              <span>to</span>
+              <input
+                type="date"
+                value={tempEndDate}
+                onChange={(e) => setTempEndDate(e.target.value)}
+                className="date-input"
+              />
+              <button 
+                onClick={handleDateRangeSubmit} 
+                className="apply-date-range"
+                disabled={!tempStartDate || !tempEndDate}
+              >
+                Apply
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="chart-container">
