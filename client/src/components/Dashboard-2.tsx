@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import DatePicker from 'react-datepicker';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Dashboard.css';
+import '../styles/Dashboard2.css';
 import api from "../../axios"
 import select from './select';
 import { Button, Form } from 'react-bootstrap';

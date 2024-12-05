@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
-import api from "../../axios"
-import select from './select';
+
 
 interface TrendingStock {
   STOCKID: string;
@@ -145,7 +144,7 @@ const Dashboard = () => {
       </section>
 
       {/* Section 2: Stock Queries */}
-      <section className={`section stock-queries has-stock`}>
+      <section className={`section stock-queries ${stockData ? 'has-stock' : ''}`}>
         <h2>Stock Queries</h2>
         <div className="query-controls">
           <input
@@ -161,7 +160,6 @@ const Dashboard = () => {
             <option value="1m">1 Month</option>
             <option value="1y">1 Year</option>
           </select>
-      
         </div>
         {loading && <p>Loading...</p>}
         {error && <p className="error">{error}</p>}

@@ -19,6 +19,7 @@
     color: var(--text-dark);
     max-width: none; 
     margin: 0; 
+    flex-wrap: wrap;
     box-sizing: border-box;
     padding-top: 80px; 
 }
@@ -60,12 +61,26 @@
 
 
 .stock-queries {
+    flex: 1 1 320px;
+    min-width: 0;
+    display: flex;
+    height:100%;
+
+    flex-direction: column;
+    gap: 15px;
+    flex-direction: column;
+    overflow: hidden;
+}
+.stock-queries {
     flex: 2;
     min-width: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* This ensures children are stacked vertically */
     gap: 15px;
+    align-items: center; /* Align items to the start of the container */
+    justify-content: flex-start; /* Align content at the top */
     overflow: hidden;
+    height: 100%; /* Make sure the height is taking up the full space of the parent */
 }
 .stock-queries input,
 .stock-queries select {
@@ -78,9 +93,10 @@
 }
 .query-controls {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
     gap: 10px;
-    align-items: center;
+    align-items:start;
     max-width: 100%; 
     box-sizing: border-box;
 }
@@ -149,7 +165,7 @@ button:hover {
 }
 
 .section.stock-queries.has-stock {
-    height: 450px;
+    height: 750px;
 }
 
 .section.stock-queries:hover {
@@ -190,7 +206,7 @@ button:hover {
 /* Add new section styles */
 .trending-section,
 .news-section {
-    flex: 0 0 calc(50% - 15px);
+    flex: 1 1 calc(50% - 15px);
     max-width: calc(50% - 15px);
     height: 100px;
 }

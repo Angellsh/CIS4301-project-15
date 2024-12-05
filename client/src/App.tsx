@@ -4,7 +4,8 @@ import viteLogo from '/vite.svg'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import './App.css'
 import Register from './components/Register'
-import Dashboard from './components/Dashboard-2'
+import Dashboard from './components/Dashboard'
+import Dashboard2 from './components/Dashboard-2'
 import Header from './components/Header'
 import Login from './components/Login'
 import ResetPassword from './components/ResetPassword'
@@ -17,6 +18,7 @@ function App() {
       <Routes>
         <Route path = "/" element ={<Dashboard />}/>
         <Route path ="/dashboard" element ={<Dashboard/>}/>
+        <Route path = "/dashboard2" element = {<Dashboard2 />}/>
         <Route path = "/register" element = {<Register />}/>
         <Route path = "/login" element = {<Login />} />
         <Route path ="/reset-password" element = {<ResetPassword/>}/>
