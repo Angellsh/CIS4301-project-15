@@ -36,7 +36,8 @@ const Dashboard = () => {
     '5': 'Stocks with highest average trading volume',
     '6': 'Stocks with highest average daily trading volume',
     '7': 'Most volatile stocks',
-    '8': 'Stocks with highest percentage increase'
+    '8': 'Stocks with highest percentage increase', 
+    '9': 'Stocks trading above their moving averages '
   };
 
   const formatValue = (value: any) => {
@@ -161,6 +162,7 @@ const Dashboard = () => {
       });
 
       if (response?.data) {
+        console.log(response.data)
         setQueryResponse(response.data.rows);
         setQueryFlag(true);
       }

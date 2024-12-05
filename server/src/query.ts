@@ -6,55 +6,38 @@ const queries = [{
     body: `SELECT stockid,
             AVG(volume) AS avg_volume
             FROM ALIASHYNSKA.stockperformance
-            WHERE recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+            WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND TO_DATE(:end_date, 'YYYY-MM-DD')
             GROUP BY stockid
             ORDER BY avg_volume DESC
             FETCH FIRST :numInt ROWS ONLY`
     },
-    {id:1, 
-        body:`
-with percChange AS (SELECT 
-        (SELECT close 
-         FROM ALIASHYNSKA.stockperformance 
-         WHERE stockid = :stockid
-         AND recorddate = TO_DATE(:startDate, 'YYYY-MM-DD') 
-         FETCH FIRST 1 ROWS ONLY) AS start_price,
-        
-        (SELECT close 
-         FROM ALIASHYNSKA.stockperformance 
-         WHERE stockid = :stockid
-         AND recorddate =  TO_DATE(:endDate, 'YYYY-MM-DD') 
-         FETCH FIRST 1 ROWS ONLY) AS end_price
-         FROM ALIASHYNSKA.stockperformance)
-,
-max_min AS (
-    SELECT 
-        MAX(high) AS max_price, 
-        MIN(low) AS min_price
-    FROM ALIASHYNSKA.stockperformance
-    WHERE stockid = :stockid 
-    AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
-    AND TO_DATE(:endDate, 'YYYY-MM-DD')
-),
-volData AS (
-    SELECT 
-        STDDEV(close) AS volatility
-    FROM ALIASHYNSKA.stockperformance
-    WHERE stockid = :stockid
-    AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
-    AND TO_DATE(:endDate, 'YYYY-MM-DD')
-)
-SELECT 
-    volData.volatility, 
-    max_min.max_price, 
-    max_min.min_price,
-    ((percChange.end_price - percChange.start_price) / percChange.start_price) * 100 AS percentage_change
-FROM percChange
-JOIN max_min ON 1 = 1  
-JOIN volData ON 1 = 1
-            `},
     {
-        id: 'movement',
+        id:6, 
+        name: "average daily",
+        body:`SELECT stockid, recorddate,
+                AVG(volume) AS avg_volume
+                FROM ALIASHYNSKA.stockperformance
+                WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') AND TO_DATE(:end_date, 'YYYY-MM-DD')
+                GROUP BY stockid, recorddate
+                ORDER BY avg_volume DESC
+                FETCH FIRST :numInt ROWS ONLY
+            `
+    },
+    {id:8, 
+    name: "highest percentage", 
+    body:`SELECT stockid as ticker,
+                MIN(close) as min_price, 
+                MAX(close) as max_price, 
+                ROUND(((MAX(close)- MIN(close))/ MIN(close)*100), 2) as price_change_percent
+            FROM ALIASHYNSKA.STOCKPERFORMANCE
+                WHERE recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') 
+            AND TO_DATE(:end_date, 'YYYY-MM-DD')
+            GROUP BY stockid
+            ORDER BY price_change_percent
+            FETCH FIRST :NUMINT ROWS ONLY `},
+    {
+        id: 9,
+        name: 'movement',
         body: `
       SELECT 
         MIN(close) as min_price,
@@ -62,12 +45,13 @@ JOIN volData ON 1 = 1
         ROUND(((MAX(close) - MIN(close)) / MIN(close) * 100), 2) as price_change_percent
       FROM ALIASHYNSKA.STOCKPERFORMANCE
       WHERE stockid = :stockid
-      AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
-      AND TO_DATE(:endDate, 'YYYY-MM-DD')
+      AND recorddate BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD') 
+      AND TO_DATE(:end_date, 'YYYY-MM-DD')
     `
     },
     {
-        id: 'average',
+        id: 10, 
+        name: 'average daily',
         body: `
       SELECT 
         ROUND(AVG(close), 2) as avg_price,
@@ -118,6 +102,7 @@ export const processQuery = async (req: Request, res: Response) => {
 };
 export const processGeneralQuery = async (req: Request, res: Response) => {
     try {
+        console.log(req)
         const { queryId, startDate, endDate, numInt } = req.body;
         if (!queryId || !startDate || !endDate || !numInt) {
             res.status(400).json({ error: 'Missing required parameters' });
@@ -130,11 +115,16 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
             res.status(404).json({ error: 'Query not found' });
             return;
         }
+        const formatted_start = new Date(startDate).toISOString().split('T')[0]
+        console.log(formatted_start)
+        const formatted_end=new Date(endDate).toISOString().split('T')[0]
+
         const dbres = await sendQuery(query.body, {
-            startDate,
-            endDate,
+            start_date: formatted_start,
+            end_date :formatted_end,
             numInt
         });
+        console.log(dbres?.rows)
         if (dbres?.rows) {
             res.status(200).json({ rows: dbres.rows });
         } else {
