@@ -7,8 +7,7 @@ interface VolatilityData {
 }
 
 export const getStockVolatility = async (req: Request, res: Response): Promise<void> => {
-  const stockId = req.body.stockId;
-  const timeRange = req.body.timeRange;
+  const { stockId, timeRange, startDate, endDate } = req.body;
 
   if (!stockId) {
     res.status(400).json({ error: 'Stock ID is required' });
@@ -33,37 +32,66 @@ export const getStockVolatility = async (req: Request, res: Response): Promise<v
     let query: string;
     let queryParams: any = { stockId, latestDate };
 
-    const timeRangeMap: { [key: string]: string } = {
-      '1d': "INTERVAL '1' DAY",
-      '1w': "INTERVAL '7' DAY",
-      '1m': "INTERVAL '30' DAY",
-      '1y': "ADD_MONTHS(:latestDate, -12)"
-    };
+    // Handle custom date range
+    if (timeRange.startsWith('custom_')) {
+      if (!startDate || !endDate) {
+        res.status(400).json({ error: 'Start date and end date are required for custom range' });
+        return;
+      }
 
-    const timeInterval = timeRangeMap[timeRange];
-    if (timeInterval) {
       query = `
-      WITH price_data AS (
-        SELECT recorddate, close AS price
-        FROM ALIASHYNSKA.STOCKPERFORMANCE
-        WHERE stockid = :stockId
-        AND recorddate >= ${timeRange === '1y' ? '' : ':latestDate - '}${timeInterval}
-        AND recorddate <= :latestDate
-        ORDER BY recorddate
-      ),
-      daily_returns AS (
-        SELECT 
-          recorddate,
-          (price - LAG(price) OVER (ORDER BY recorddate)) / LAG(price) OVER (ORDER BY recorddate) AS daily_return
-        FROM price_data
-      )
-      SELECT recorddate, daily_return
-      FROM daily_returns
-      WHERE daily_return IS NOT NULL
+        WITH price_data AS (
+          SELECT recorddate, close AS price
+          FROM ALIASHYNSKA.STOCKPERFORMANCE
+          WHERE stockid = :stockId
+          AND recorddate >= TO_DATE(:startDate, 'YYYY-MM-DD')
+          AND recorddate <= TO_DATE(:endDate, 'YYYY-MM-DD')
+          ORDER BY recorddate
+        ),
+        daily_returns AS (
+          SELECT 
+            recorddate,
+            (price - LAG(price) OVER (ORDER BY recorddate)) / LAG(price) OVER (ORDER BY recorddate) AS daily_return
+          FROM price_data
+        )
+        SELECT recorddate, daily_return
+        FROM daily_returns
+        WHERE daily_return IS NOT NULL
       `;
+      queryParams = { stockId, startDate, endDate };
     } else {
-      res.status(400).json({ error: 'Invalid time range' });
-      return;
+      const timeRangeMap: { [key: string]: string } = {
+        '1d': "INTERVAL '1' DAY",
+        '1w': "INTERVAL '7' DAY",
+        '1m': "INTERVAL '30' DAY",
+        '1y': "ADD_MONTHS(:latestDate, -12)"
+      };
+
+      const timeInterval = timeRangeMap[timeRange];
+      if (timeInterval) {
+        query = `
+        WITH price_data AS (
+          SELECT recorddate, close AS price
+          FROM ALIASHYNSKA.STOCKPERFORMANCE
+          WHERE stockid = :stockId
+          AND recorddate >= ${timeRange === '1y' ? '' : ':latestDate - '}${timeInterval}
+          AND recorddate <= :latestDate
+          ORDER BY recorddate
+        ),
+        daily_returns AS (
+          SELECT 
+            recorddate,
+            (price - LAG(price) OVER (ORDER BY recorddate)) / LAG(price) OVER (ORDER BY recorddate) AS daily_return
+          FROM price_data
+        )
+        SELECT recorddate, daily_return
+        FROM daily_returns
+        WHERE daily_return IS NOT NULL
+        `;
+      } else {
+        res.status(400).json({ error: 'Invalid time range' });
+        return;
+      }
     }
 
     const result = await sendQuery(query, queryParams);

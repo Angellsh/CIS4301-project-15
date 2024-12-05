@@ -6,7 +6,7 @@ import { getTrendingStocks } from "../trending"
 import { getStockVolatility } from "../stockvol"
 import { getMA } from "../ma"
 import { refreshToken } from "../controllers/refreshToken";
-import {processQuery} from "../query"
+import {processQuery, processGeneralQuery} from "../query"
 
 const router = Router();
 router.post('/register',  register);
@@ -21,6 +21,8 @@ router.post('/lookup-stock-performance',getStockPerf);
 router.post("/trending-stocks",getTrendingStocks);
 router.get('/trending-stocks', getTrendingStocks);
 router.post('/process-query', processQuery);
+router.post('/process-general-query', processGeneralQuery);
 router.post('/stockvol', getStockVolatility);
 router.post('/ma', getMA);
+
 export default router;

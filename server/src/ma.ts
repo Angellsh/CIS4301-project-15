@@ -6,9 +6,15 @@ interface MovingAverageData {
   movingAverage: number; // Moving average based on user-specified time range
 }
 
+interface QueryParams {
+  stockId: string;
+  latestDate: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export const getMA = async (req: Request, res: Response): Promise<void> => {
-  const stockId = req.body.stockId;
-  const timeRange = req.body.timeRange;
+  const { stockId, timeRange, startDate, endDate } = req.body;
 
   if (!stockId) {
     res.status(400).json({ error: 'Stock ID is required' });
@@ -47,14 +53,27 @@ export const getMA = async (req: Request, res: Response): Promise<void> => {
       '1y': { dateCondition: `recorddate >= ADD_MONTHS(:latestDate, -12)`, windowSize: 252 }
     };
 
-    const timeRangeData = timeRangeMap[timeRange];
+    let queryParams: QueryParams = { stockId, latestDate };
+    let dateCondition: string;
+    let windowSize: number = 22; // default to monthly window size
 
-    if (!timeRangeData) {
-      res.status(400).json({ error: 'Invalid time range' });
-      return;
+    if (timeRange.startsWith('custom_')) {
+      if (!startDate || !endDate) {
+        res.status(400).json({ error: 'Start date and end date are required for custom range' });
+        return;
+      }
+
+      dateCondition = `recorddate >= TO_DATE(:startDate, 'YYYY-MM-DD') AND recorddate <= TO_DATE(:endDate, 'YYYY-MM-DD')`;
+      queryParams = { ...queryParams, startDate, endDate };
+    } else {
+      const timeRangeData = timeRangeMap[timeRange];
+      if (!timeRangeData) {
+        res.status(400).json({ error: 'Invalid time range' });
+        return;
+      }
+      dateCondition = timeRangeData.dateCondition;
+      windowSize = timeRangeData.windowSize;
     }
-
-    const queryParams = { stockId, latestDate };
 
     const movingAverageQuery = `
       WITH price_data AS (
@@ -65,7 +84,7 @@ export const getMA = async (req: Request, res: Response): Promise<void> => {
           ALIASHYNSKA.STOCKPERFORMANCE
         WHERE 
           stockid = :stockId
-          AND ${timeRangeData.dateCondition}
+          AND ${dateCondition}
           AND recorddate <= :latestDate
         ORDER BY 
           recorddate ASC
@@ -74,7 +93,7 @@ export const getMA = async (req: Request, res: Response): Promise<void> => {
         recorddate,
         AVG(price) OVER (
           ORDER BY recorddate 
-          ROWS BETWEEN ${timeRangeData.windowSize - 1} PRECEDING AND CURRENT ROW
+          ROWS BETWEEN ${windowSize - 1} PRECEDING AND CURRENT ROW
         ) AS moving_average
       FROM price_data
       ORDER BY recorddate DESC

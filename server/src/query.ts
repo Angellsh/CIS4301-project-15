@@ -1,4 +1,3 @@
-
 import { Request, Response } from "express"
 import { sendQuery } from "./model/oracledb";
 import { start } from "repl";
@@ -53,68 +52,97 @@ SELECT
 FROM percChange
 JOIN max_min ON 1 = 1  
 JOIN volData ON 1 = 1
-            `}
-
+            `},
+    {
+        id: 'movement',
+        body: `
+      SELECT 
+        MIN(close) as min_price,
+        MAX(close) as max_price,
+        ROUND(((MAX(close) - MIN(close)) / MIN(close) * 100), 2) as price_change_percent
+      FROM ALIASHYNSKA.STOCKPERFORMANCE
+      WHERE stockid = :stockid
+      AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') 
+      AND TO_DATE(:endDate, 'YYYY-MM-DD')
+    `
+    },
+    {
+        id: 'average',
+        body: `
+      SELECT 
+        ROUND(AVG(close), 2) as avg_price,
+        ROUND(AVG(
+          CASE 
+            WHEN low = 0 THEN 0 
+            ELSE ((high - low) / low) * 100 
+          END
+        ), 2) as avg_daily_volatility
+      FROM ALIASHYNSKA.STOCKPERFORMANCE
+      WHERE stockid = :stockid
+      AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
+      AND TO_DATE(:endDate, 'YYYY-MM-DD')
+    `
+    }
 ]
 
-export const processQuery = async (req:Request, res: Response) =>{
-    try{
-        console.log(" in process query", req.body)
-        if(!req.body){
-            res.sendStatus(500);
+export const processQuery = async (req: Request, res: Response) => {
+    try {
+        const { queryId, stockid, startDate, endDate } = req.body;
+
+        if (!queryId || !stockid || !startDate || !endDate) {
+            res.status(400).json({ error: 'Missing required parameters' });
             return;
         }
-        //queryId, startDate, endDate, stockSymbol, number
-        let {queryId, startDate, endDate, stockSymbol, num} = req.body;
-        console.log("queryid", queryId)
-        console.log("startDate", startDate)
-        console.log("endDate", endDate)
-        console.log("num", num)
-        startDate =new Date('2014-06-11')
-    endDate = new Date('2024-12-10')
 
-
-        const query = queries.find(q => q.id.toString()===queryId) as any;
-        console.log(query)
+        const query = queries.find(q => q.id === queryId);
         if (!query) {
-            res.status(404).send("Query not found");
+            res.status(404).json({ error: 'Query not found' });
             return;
-          }
-        const numInt = parseInt(num)
-        const formattedStart = new Date(startDate).toISOString().split('T')[0]
-        const formattedEnd = new Date(endDate).toISOString().split('T')[0]
-        console.log(formattedStart, formattedEnd, stockSymbol )
-        let dbres;
-        if(query.id ===5){
-             dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, numInt})
-           // binds = { startDate:formattedStart, endDate:formattedEnd, numInt}
-        }
-        else if(query.id===1){
-            console.log("executing query 1")
-            const stockid = stockSymbol
-             dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, STOCKID: stockSymbol})
-
-            //binds = { startDate:formattedStart, endDate:formattedEnd, stockid: stockSymbol}
-
-        }
-       
-        // dbres = await sendQuery(query.body, binds)
-        if(dbres?.rows){
-            console.log(dbres.rows)
-
-           res.status(200).json({rows:dbres.rows})
-           
-        }
-        else{
-            console.log("no result")
-            res.sendStatus(404);
         }
 
-    }catch(err){
-        console.log(err)
-        res.sendStatus(500);
+        const dbres = await sendQuery(query.body, {
+            stockid,
+            startDate,
+            endDate
+        });
 
+        if (dbres?.rows) {
+            res.status(200).json({ rows: dbres.rows });
+        } else {
+            res.status(404).json({ error: 'No data found' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
     }
-   
+};
+export const processGeneralQuery = async (req: Request, res: Response) => {
+    try {
+        const { queryId, startDate, endDate, numInt } = req.body;
+        if (!queryId || !startDate || !endDate || !numInt) {
+            res.status(400).json({ error: 'Missing required parameters' });
+            return;
+        }
+        // Convert queryId to number for comparison if it's a string
+        const queryIdNum = typeof queryId === 'string' ? parseInt(queryId) : queryId;
+        const query = queries.find(q => q.id === queryIdNum);
+        if (!query) {
+            res.status(404).json({ error: 'Query not found' });
+            return;
+        }
+        const dbres = await sendQuery(query.body, {
+            startDate,
+            endDate,
+            numInt
+        });
+        if (dbres?.rows) {
+            res.status(200).json({ rows: dbres.rows });
+        } else {
+            res.status(404).json({ error: 'No data found' });
+        }
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 }
-export default processQuery

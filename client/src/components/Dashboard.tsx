@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
-
+import api from "../../axios";  // Add this import
 
 interface TrendingStock {
   STOCKID: string;
@@ -21,13 +21,33 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stockData, setStockData] = useState<Stock | null>(null);
-  const [tstockData, setTstockData] = useState<TrendingStock | null>(null);
   const navigate = useNavigate();
   const [trendingStocks, setTrendingStocks] = useState([]);
   const [trendingError, setTrendingError] = useState('');
   const [trendingLoading, setTrendingLoading] = useState(true);
+  const [topN, setTopN] = useState('5');
+  const [selectedInsight, setSelectedInsight] = useState('');
+  const [insightStartDate, setInsightStartDate] = useState('');
+  const [insightEndDate, setInsightEndDate] = useState('');
+  const [queryResponse, setQueryResponse] = useState([]);
+  const [queryFlag, setQueryFlag] = useState(false);
 
+  const insightOptions = {
+    '5': 'Stocks with highest average trading volume',
+    '6': 'Stocks with highest average daily trading volume',
+    '7': 'Most volatile stocks',
+    '8': 'Stocks with highest percentage increase'
+  };
 
+  const formatValue = (value: any) => {
+    if (typeof value === 'number') {
+      return value.toLocaleString(undefined, { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2 
+      });
+    }
+    return value;
+  };
 
   useEffect(() => {
     const fetchTrendingStocks = async () => {
@@ -124,92 +144,174 @@ const Dashboard = () => {
     setSelectedTimeRange(e.target.value);
   };
 
+  useEffect(() => {
+    if (selectedInsight && insightStartDate && insightEndDate) {
+      handleInsightQuery();
+    }
+  }, [selectedInsight]);
+
+  const handleInsightQuery = async () => {
+    try {
+      console.log("query id", selectedInsight);
+      const response = await api.post("/process-general-query", {
+        queryId: Number(selectedInsight),
+        startDate: insightStartDate,
+        endDate: insightEndDate,
+        numInt: parseInt(topN)
+      });
+
+      if (response?.data) {
+        setQueryResponse(response.data.rows);
+        setQueryFlag(true);
+      }
+    } catch (err) {
+      console.log(err);
+      setQueryResponse([]);
+    }
+  };
+
   return (
     <div className="dashboard">
-      {/* Section 1: User Info and Stock Overview */}
-      <section className="section user-stock-overview">
-        <div className="user-info">
-          <h2>
-            {(() => {
-              const hour = new Date().getHours();
-              if (hour < 12) return 'Good morning';
-              if (hour < 18) return 'Good afternoon';
-              return 'Good evening';
-            })()}, welcome to your dashboard.
-          </h2>
-        </div>
-        <div className="stock-list">
-          {/* Stock cards will go here */}
-        </div>
-      </section>
-
-      {/* Section 2: Stock Queries */}
-      <section className={`section stock-queries ${stockData ? 'has-stock' : ''}`}>
-        <h2>Stock Queries</h2>
-        <div className="query-controls">
-          <input
-            type="text"
-            placeholder="Enter stock symbol"
-            value={stockSymbol}
-            onChange={(e) => setStockSymbol(e.target.value)}
-            onKeyDown={handleKeyPress1} /*shows stock-data */
-          />
-          <select value={selectedTimeRange} onChange={handleTimeRangeChange}>
-            <option value="1d">1 Day</option>
-            <option value="1w">1 Week</option>
-            <option value="1m">1 Month</option>
-            <option value="1y">1 Year</option>
-          </select>
-        </div>
-        {loading && <p>Loading...</p>}
-        {error && <p className="error">{error}</p>}
-        {stockData && (
-          <div
-            className="stock-data"
-            onClick={() => navigate(`/stock/${stockData.STOCKID}/${selectedTimeRange}`)}
-          >
-            <h3>{stockData.STOCKID}</h3>
-            <p>Name: {stockData.NAME}</p>
-            <p>Category: {stockData.CATEGORY}</p>
+      {/* First Row */}
+      <div className="row-container">
+        <section className="section user-stock-overview">
+          <div className="user-info">
+            <h2>
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Good morning';
+                if (hour < 18) return 'Good afternoon';
+                return 'Good evening';
+              })()}, welcome to your dashboard.
+            </h2>
           </div>
-        )}
-      </section>
+          <div className="stock-list">
+            {/* Stock cards will go here */}
+          </div>
+        </section>
+      </div>
 
-      {/* Section 3: Trending Stocks */}
-      <section className="section trending-section">
-        <div className="trending-stocks">
-          <h2>Trending Stocks</h2>
-          {trendingLoading && <p>Loading trending stocks...</p>}
-          {trendingError && <p className="error">{trendingError}</p>}
-          {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
-            <ul>
-              {trendingStocks.map((tstock: any) => (
-                <li
-                  key={tstock.STOCKID}
-                  className="trending-stock"
-                  onClick={() => navigate(`/stock/${tstock.STOCKID}/${selectedTimeRange}`)}
+      {/* Second Row */}
+      <div className="row-container">
+        <section className={`section stock-queries ${stockData ? 'has-stock' : ''}`}>
+          <h2>Stock Queries</h2>
+          <div className="query-controls">
+            <input
+              type="text"
+              placeholder="Enter stock symbol"
+              value={stockSymbol}
+              onChange={(e) => setStockSymbol(e.target.value)}
+              onKeyDown={handleKeyPress1} /*shows stock-data */
+            />
+            <select value={selectedTimeRange} onChange={handleTimeRangeChange}>
+              <option value="1d">1 Day</option>
+              <option value="1w">1 Week</option>
+              <option value="1m">1 Month</option>
+              <option value="1y">1 Year</option>
+            </select>
+          </div>
+          {loading && <p>Loading...</p>}
+          {error && <p className="error">{error}</p>}
+          {stockData && (
+            <div
+              className="stock-data"
+              onClick={() => navigate(`/stock/${stockData.STOCKID}/${selectedTimeRange}`)}
+            >
+              <h3>{stockData.STOCKID}</h3>
+              <p>Name: {stockData.NAME}</p>
+              <p>Category: {stockData.CATEGORY}</p>
+            </div>
+          )}
+        </section>
+
+        <section className={`market-insights-card ${queryResponse.length > 0 ? 'expanded' : ''}`}>
+          <div className="insights-content">
+            <div className="insights-header">
+              <select value={topN} onChange={(e) => setTopN(e.target.value)}>
+                <option value="5">Top 5</option>
+                <option value="10">Top 10</option>
+                <option value="25">Top 25</option>
+              </select>
+              <div className="date-range">
+                <input
+                  type="date"
+                  placeholder="Start Date"
+                  value={insightStartDate}
+                  onChange={(e) => setInsightStartDate(e.target.value)}
+                />
+                <input
+                  type="date"
+                  placeholder="End Date"
+                  value={insightEndDate}
+                  onChange={(e) => setInsightEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="insights-options">
+              {Object.entries(insightOptions).map(([key, label]) => (
+                <div
+                  key={key}
+                  className={`insight-option ${selectedInsight === key ? 'selected' : ''}`}
+                  onClick={() => setSelectedInsight(key)}
                 >
-                  <h4>
-                    {tstock.STOCKID} 
-                    <span className="stock-price">{tstock.PERCENT.toFixed(2)}%</span>
-                  </h4>
-                </li>
+                  {label}
+                </div>
               ))}
-            </ul>
-          )}
-          {!trendingLoading && !trendingError && trendingStocks.length === 0 && (
-            <p>No trending stocks available at the moment.</p>
-          )}
-        </div>
-      </section>
+            </div>
+          </div>
 
-      {/* Section 4: Market News */}
-      <section className="section news-section">
-        <h2>Market News</h2>
-        <div className="news-list">
-          {/* News articles will go here */}
-        </div>
-      </section>
+          {queryResponse.length > 0 && (
+            <div className="insights-results">
+              <table className="results-table">
+                <thead>
+                  <tr>
+                    {Object.keys(queryResponse[0]).map((header) => (
+                      <th key={header}>{header.replace(/_/g, ' ')}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {queryResponse.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, i) => (
+                        <td key={i}>{formatValue(value)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="section trending-section">
+          <div className="trending-stocks">
+            <h2>Trending Stocks</h2>
+            {trendingLoading && <p>Loading trending stocks...</p>}
+            {trendingError && <p className="error">{trendingError}</p>}
+            {!trendingLoading && !trendingError && trendingStocks.length > 0 && (
+              <ul>
+                {trendingStocks.map((tstock: any) => (
+                  <li
+                    key={tstock.STOCKID}
+                    className="trending-stock"
+                    onClick={() => navigate(`/stock/${tstock.STOCKID}/${selectedTimeRange}`)}
+                  >
+                    <h4>
+                      {tstock.STOCKID} 
+                      <span className="stock-price">{tstock.PERCENT.toFixed(2)}%</span>
+                    </h4>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!trendingLoading && !trendingError && trendingStocks.length === 0 && (
+              <p>No trending stocks available at the moment.</p>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
