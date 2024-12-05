@@ -7,8 +7,7 @@ interface PriceHistory {
 }
 
 export const getStockPerf = async (req: Request, res: Response): Promise<void> => {
-  const stockId = req.body.stockId;
-  const timeRange = req.body.timeRange;
+  const { stockId, timeRange, startDate, endDate } = req.body;
 
   if (!stockId) {
     res.status(400).json({ error: 'Stock ID is required' });
@@ -33,26 +32,58 @@ export const getStockPerf = async (req: Request, res: Response): Promise<void> =
     let query: string;
     let queryParams: any = { stockId, latestDate };
 
-    const timeRangeMap: { [key: string]: string } = {
-      '1d': "INTERVAL '1' DAY",
-      '1w': "INTERVAL '7' DAY",
-      '1m': "INTERVAL '30' DAY",
-      '1y': "ADD_MONTHS(:latestDate, -12)"
-    };
+    // Handle custom date range
+    if (timeRange.startsWith('custom_')) {
+      if (!startDate || !endDate) {
+        res.status(400).json({ error: 'Start date and end date are required for custom range' });
+        return;
+      }
 
-    const timeInterval = timeRangeMap[timeRange];
-    if (timeInterval) {
+      // Validate dates
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        res.status(400).json({ error: 'Invalid date format' });
+        return;
+      }
+
+      if (start > end) {
+        res.status(400).json({ error: 'Start date cannot be after end date' });
+        return;
+      }
+
       query = `
-      SELECT recorddate, open, high, low, close 
-      FROM ALIASHYNSKA.STOCKPERFORMANCE
-      WHERE stockid = :stockId
-      AND recorddate >= ${timeRange === '1y' ? '' : ':latestDate - '}${timeInterval}
-      AND recorddate <= :latestDate
-      ORDER BY recorddate DESC
+        SELECT recorddate, open, high, low, close 
+        FROM ALIASHYNSKA.STOCKPERFORMANCE
+        WHERE stockid = :stockId
+        AND recorddate >= TO_DATE(:startDate, 'YYYY-MM-DD')
+        AND recorddate <= TO_DATE(:endDate, 'YYYY-MM-DD')
+        ORDER BY recorddate ASC
       `;
+      queryParams = { stockId, startDate, endDate };
     } else {
-      res.status(400).json({ error: 'Invalid time range' });
-      return;
+      const timeRangeMap: { [key: string]: string } = {
+        '1d': "INTERVAL '1' DAY",
+        '1w': "INTERVAL '7' DAY",
+        '1m': "INTERVAL '30' DAY",
+        '1y': "ADD_MONTHS(:latestDate, -12)"
+      };
+
+      const timeInterval = timeRangeMap[timeRange];
+      if (timeInterval) {
+        query = `
+        SELECT recorddate, open, high, low, close 
+        FROM ALIASHYNSKA.STOCKPERFORMANCE
+        WHERE stockid = :stockId
+        AND recorddate >= ${timeRange === '1y' ? '' : ':latestDate - '}${timeInterval}
+        AND recorddate <= :latestDate
+        ORDER BY recorddate DESC
+        `;
+      } else {
+        res.status(400).json({ error: 'Invalid time range' });
+        return;
+      }
     }
 
     const result = await sendQuery(query, queryParams);
