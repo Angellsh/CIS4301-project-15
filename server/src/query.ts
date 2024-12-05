@@ -75,7 +75,6 @@ export const processQuery = async (req:Request, res: Response) =>{
 
 
         const query = queries.find(q => q.id.toString()===queryId) as any;
-        console.log(query)
         if (!query) {
             res.status(404).send("Query not found");
             return;
@@ -83,17 +82,15 @@ export const processQuery = async (req:Request, res: Response) =>{
         const numInt = parseInt(num)
         const formattedStart = new Date(startDate).toISOString().split('T')[0]
         const formattedEnd = new Date(endDate).toISOString().split('T')[0]
-        console.log(formattedStart, formattedEnd, stockSymbol )
         let dbres;
         if(query.id ===5){
-             dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, numInt})
+            dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, numInt})
            // binds = { startDate:formattedStart, endDate:formattedEnd, numInt}
         }
         else if(query.id===1){
             console.log("executing query 1")
-            const stockid = stockSymbol
-             dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, STOCKID: stockSymbol})
-
+            dbres = await sendQuery(query.body, { startDate:formattedStart, endDate:formattedEnd, stockid: stockSymbol})
+            console.log("got here")
             //binds = { startDate:formattedStart, endDate:formattedEnd, stockid: stockSymbol}
 
         }
