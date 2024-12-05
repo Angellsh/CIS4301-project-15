@@ -4,7 +4,7 @@ import { getStockById } from '../stock';
 import { getStockPerf } from '../stockperf';
 import { getTrendingStocks } from "../trending"
 import { refreshToken } from "../controllers/refreshToken";
-
+import {processQuery} from "../query"
 
 const router = Router();
 router.post('/register',  register);
@@ -18,4 +18,5 @@ router.post('/lookup-stock',getStockById);
 router.post('/lookup-stock-performance',getStockPerf);
 router.post("/trending-stocks",getTrendingStocks);
 router.get('/trending-stocks', getTrendingStocks);
+router.post('/process-query', processQuery);
 export default router;
