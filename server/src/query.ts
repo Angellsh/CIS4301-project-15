@@ -66,6 +66,42 @@ const queries = [{
       AND recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
       AND TO_DATE(:endDate, 'YYYY-MM-DD')
     `
+    },
+    {
+        id:7,
+        body:`
+        WITH daily_returns AS (
+            SELECT 
+                stockid,
+                recorddate,
+                (close - LAG(close) OVER (PARTITION BY stockid ORDER BY recorddate)) / LAG(close) OVER (PARTITION BY stockid ORDER BY recorddate) AS daily_return
+            FROM 
+                ALIASHYNSKA.stockperformance
+            WHERE 
+                recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+            ),
+            volatility_data AS (
+            SELECT 
+                stockid,
+                STDDEV(daily_return) AS volatility -- Calculate standard deviation of daily returns
+            FROM 
+                daily_returns
+            WHERE 
+                daily_return IS NOT NULL -- Exclude null values (first row in each stock's series)
+            GROUP BY 
+                stockid
+            )
+            SELECT 
+            stockid,
+            volatility
+            FROM 
+            volatility_data
+            ORDER BY 
+            volatility DESC
+            FETCH FIRST :numInt ROWS ONLY
+        
+        
+        `
     }
 ]
 
@@ -128,6 +164,7 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
         if (dbres?.rows) {
             res.status(200).json({ rows: dbres.rows });
         } else {
+            //console.log(dbres);
             res.status(404).json({ error: 'No data found' });
         }
     }
