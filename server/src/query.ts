@@ -134,7 +134,6 @@ export const processQuery = async (req: Request, res: Response) => {
 };
 export const processGeneralQuery = async (req: Request, res: Response) => {
     try {
-        console.log(req)
         const { queryId, startDate, endDate, numInt } = req.body;
         if (!queryId || !startDate || !endDate || !numInt) {
             res.status(400).json({ error: 'Missing required parameters' });
@@ -148,7 +147,6 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
             return;
         }
         const formatted_start = new Date(startDate).toISOString().split('T')[0]
-        console.log(formatted_start)
         const formatted_end=new Date(endDate).toISOString().split('T')[0]
 
         const dbres = await sendQuery(query.body, {
@@ -172,11 +170,10 @@ export const processGeneralQuery = async (req: Request, res: Response) => {
 
 export const getTuplesCount = async (req: Request, res : Response) =>{
     try{
-        console.log("here")
         { const query = `SELECT 
     (SELECT COUNT(*) FROM ALIASHYNSKA.stockperformance) + 
     (SELECT COUNT(*) FROM ALIASHYNSKA.stock) AS tuplesCount
-FROM dual`
+    FROM dual`
         const dbres = await sendQuery(query, {});
         console.log(dbres)
         if(!dbres?.rows){
@@ -185,7 +182,6 @@ FROM dual`
         }
         if (dbres?.rows?.length === 0) {
             // Handle the case when there are no rows returned
-            console.log("No data found");
             res.status(404).json({ error: "No data found" });
             return;
         }
