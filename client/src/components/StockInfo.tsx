@@ -71,10 +71,6 @@ const StockInfo = () => {
     {
       id: 'average',
       text: `Get the average performance of ${stockData?.STOCKID} over the selected period`
-    },
-    {
-      id: 'compare',
-      text: `How ${stockData?.STOCKID} has performed compared to market index`
     }
   ];
 
@@ -123,14 +119,15 @@ const StockInfo = () => {
     setAnalysisResult('Loading...');
 
     try {
+      //console.log(stockData?.priceHistory[0]?.date);
       const response = await fetch('http://localhost:3000/process-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           queryId: optionId,
           stockid: stockData?.STOCKID,
-          startDate: customStartDate || '2014-01-01',
-          endDate: customEndDate || formatDate(new Date())
+          startDate: customStartDate || (stockData?.priceHistory[0]?.date.split('T')[0] || '2014-01-01'), 
+          endDate: customEndDate || formatDate(new Date()) 
         }),
         credentials: 'include',
         signal: controller.signal
@@ -152,7 +149,7 @@ const StockInfo = () => {
         case 'movement':
           message = data.MIN_PRICE === 0 ? 
             `No movement data available for ${stockData?.STOCKID} in the selected period` :
-            `${stockData?.STOCKID} has moved ${data.PRICE_CHANGE_PERCENT > 0 ? 'up' : 'down'} by ${Math.abs(data.PRICE_CHANGE_PERCENT)}% from $${data.MIN_PRICE} to $${data.MAX_PRICE}`;
+            `${stockData?.STOCKID} has moved ${data.PRICE_CHANGE_PERCENT > 0 ? 'up' : 'down'} by ${Math.abs(data.PRICE_CHANGE_PERCENT.toFixed(2))}% from $${data.EARLIEST_PRICE.toFixed(2)} to $${data.LATEST_PRICE.toFixed(2)}`;
           break;
         case 'average':
           const avgPrice = Number(data.AVG_PRICE) || 0;
@@ -165,15 +162,7 @@ const StockInfo = () => {
             `No average data available for ${stockData?.STOCKID} in the selected period` :
             `During this period, ${stockData?.STOCKID} maintained an average price of $${avgPrice.toFixed(2)} with an average daily price movement of ${avgVolatility.toFixed(2)}%. ${volatilityText}`;
           break;
-        case 'compare':
-          message = data.STOCK_RETURN === 0 && data.MARKET_RETURN === 0 ?
-            `No comparison data available for ${stockData?.STOCKID} in the selected period` :
-            `${stockData?.STOCKID} has ${data.RELATIVE_PERFORMANCE > 5 ? 'significantly outperformed' : 
-              data.RELATIVE_PERFORMANCE > 0 ? 'slightly outperformed' :
-              data.RELATIVE_PERFORMANCE < -5 ? 'significantly underperformed' : 'slightly underperformed'} 
-            the market, with a return of ${data.STOCK_RETURN.toFixed(2)}% compared to the market's ${data.MARKET_RETURN.toFixed(2)}% 
-            (${Math.abs(data.RELATIVE_PERFORMANCE).toFixed(2)}% ${data.RELATIVE_PERFORMANCE > 0 ? 'better' : 'worse'})`;
-          break;
+
       }
       
       setAnalysisResult(message);
