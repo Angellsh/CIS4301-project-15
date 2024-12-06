@@ -32,6 +32,7 @@ const Dashboard = () => {
   const [insightEndDate, setInsightEndDate] = useState('');
   const [queryResponse, setQueryResponse] = useState([]);
   const [queryFlag, setQueryFlag] = useState(false);
+  const [showTuples, setShowTuples] = useState(false);
 
   const insightOptions = {
 
@@ -226,7 +227,6 @@ const Dashboard = () => {
           </div>
         </section>
       </div>
-      <div className="row-container" style={{font:'bold'}}> Contains {rows} tuples.</div>
 
       {/* Second Row */}
       <div className="row-container">
@@ -349,6 +349,16 @@ const Dashboard = () => {
               <p>No trending stocks available at the moment.</p>
             )}
           </div>
+        </section>
+
+      </div>
+
+      <div className="row-container">
+        <section className="section tuples-section">
+          <button onClick={() => setShowTuples(!showTuples)}>
+            Show Tuples Count
+          </button>
+          {showTuples && <div style={{ marginTop: '10px' }}>Contains {rows} tuples.</div>}
         </section>
       </div>
     </div>
