@@ -29,7 +29,7 @@ const Dashboard = () => {
   const [topN, setTopN] = useState('5');
   const [selectedInsight, setSelectedInsight] = useState('');
   const [insightStartDate, setInsightStartDate] = useState('');
-  const [insightEndDate, setInsightEndDate] = useState('');
+  const [insightEndDate, setInsightEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [queryResponse, setQueryResponse] = useState([]);
   const [queryFlag, setQueryFlag] = useState(false);
   const [showTuples, setShowTuples] = useState(false);
@@ -206,6 +206,8 @@ const Dashboard = () => {
     }
   };
 
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <div className="dashboard">
       {/* First Row */}
@@ -281,6 +283,7 @@ const Dashboard = () => {
                   type="date"
                   placeholder="End Date"
                   value={insightEndDate}
+                  max={today}
                   onChange={(e) => setInsightEndDate(e.target.value)}
                 />
               </div>
