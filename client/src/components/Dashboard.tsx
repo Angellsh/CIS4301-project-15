@@ -37,7 +37,6 @@ const Dashboard = () => {
   const insightOptions = {
 
     '5': 'Stocks with highest average trading volume',
-    '6': 'Stocks with highest average daily trading volume',
     '7': 'Most volatile stocks',
     '8': 'Stocks with highest percentage increase', 
   };

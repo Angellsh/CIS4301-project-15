@@ -214,6 +214,44 @@ JOIN volData ON 1 = 1
         
         
         `
+    },
+    {
+        id:8,
+        body:`
+        WITH price_changes AS (
+            SELECT 
+                stockid,
+                FIRST_VALUE((open + high + low + close) / 4) OVER (PARTITION BY stockid ORDER BY recorddate ASC) AS start_price, -- Average price on the earliest date
+                LAST_VALUE((open + high + low + close) / 4) OVER (PARTITION BY stockid ORDER BY recorddate ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS end_price -- Average price on the latest date
+            FROM 
+                ALIASHYNSKA.stockperformance
+            WHERE 
+                recorddate BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+            ),
+            percentage_changes AS (
+            SELECT 
+                stockid,
+                MAX(start_price) AS start_price,
+                MAX(end_price) AS end_price,
+                ROUND(((MAX(end_price) - MAX(start_price)) / MAX(start_price)) * 100, 2) AS percentage_increase
+            FROM 
+                price_changes
+            GROUP BY 
+                stockid
+            )
+            SELECT 
+            stockid,
+            start_price,
+            end_price,
+            percentage_increase
+            FROM 
+            percentage_changes
+            ORDER BY 
+            percentage_increase DESC
+            FETCH FIRST :numInt ROWS ONLY
+        
+        
+        `
     }
 ]
 
